@@ -5,28 +5,25 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
@@ -45,8 +42,10 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-fun plus(a: Int, b: Int)= a + b
-fun minus(a: Int, b: Int)= a - b
+fun plus(a: Int, b: Int) = a + b
+fun minus(a: Int, b: Int) = a - b
+fun divide(a: Int, b: Int) = a / b
+fun multiply(a: Int, b: Int) = a * b
 
 fun String.toSafeInt(): Int {
     return try {
@@ -56,22 +55,26 @@ fun String.toSafeInt(): Int {
     }
 }
 
-fun result(operations: List<String>, text1: String, text2: String) : String {
-    var result = ""
-    if(operations.contains("plus"))
-        result += "\n\t Plus: ${plus(text1.toSafeInt(), text2.toSafeInt())}"
-    if(operations.contains("minus"))
-        result += "\n\t Minus: ${minus(text1.toSafeInt(), text2.toSafeInt())}"
-return result
+fun result(operation: String, text1: String, text2: String): String {
+    return when (operation) {
+        "plus" -> "\n\t Plus: ${plus(text1.toSafeInt(), text2.toSafeInt())}"
+        "minus" -> "\n\t Minus: ${minus(text1.toSafeInt(), text2.toSafeInt())}"
+        "multiply" -> "\n\t Multiply: ${multiply(text1.toSafeInt(), text2.toSafeInt())}"
+        else -> "\n\t Divide: ${divide(text1.toSafeInt(), text2.toSafeInt())}"
+    }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SumScreen() {
 
     var text1 by remember { mutableStateOf("") }
     var text2 by remember { mutableStateOf("") }
-    var operations by remember { mutableStateOf(listOf<String>()) }
+    var operations = arrayOf("plus", "minus", "multiply", "divide")
+    var operation by remember { mutableStateOf(operations[0]) }
+    var expanded by remember { mutableStateOf(false) }
 
-    var result = result(operations, text1, text2)
+    var result = result(operation, text1, text2)
 
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
         Column(
@@ -99,54 +102,35 @@ fun SumScreen() {
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
             Spacer(modifier = Modifier.padding(10.dp))
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-                    .padding(horizontal = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = { expanded = !expanded }
             ) {
-                Checkbox(
-                    checked = operations.contains("plus"),
-                    onCheckedChange = { checked ->
-                        operations = if (checked) {
-                            operations + "plus"
-                        } else {
-                            operations - "plus"
-                        }
+                TextField(
+                    value = operation,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Selecciona una operación") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                    modifier = Modifier
+                        .menuAnchor(type = MenuAnchorType.PrimaryEditable, true)
+                )
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    operations.forEach { option ->
+                        DropdownMenuItem(
+                            text = { Text(option) },
+                            onClick = {
+                                operation = option
+                                expanded = false
+                            }
+                        )
                     }
-                )
-                Text(
-                    text = "Sumar",
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(start = 16.dp)
-                )
+                }
             }
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-                    .padding(horizontal = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Checkbox(
-                    checked = operations.contains("minus"),
-                    onCheckedChange = { checked ->
-                        operations = if (checked) {
-                            operations + "minus"
-                        } else {
-                            operations - "minus"
-                        }
-                    }
-                )
-                Text(
-                    text = "Restar",
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(start = 16.dp)
-                )
-            }
+            Spacer(modifier = Modifier.padding(10.dp))
             Text("Resultado: ${result}")
         }
     }
