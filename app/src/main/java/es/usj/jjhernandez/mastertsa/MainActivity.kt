@@ -1,7 +1,6 @@
 package es.usj.jjhernandez.mastertsa
 
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
@@ -9,8 +8,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -20,7 +19,6 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -38,6 +36,9 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+fun plus(a: Int, b: Int)= a + b
+fun minus(a: Int, b: Int)= a - b
+
 fun String.toSafeInt(): Int {
     return try {
         this.toInt()
@@ -48,9 +49,13 @@ fun String.toSafeInt(): Int {
 
 @Composable
 fun SumScreen() {
-    val context = LocalContext.current
+
     var text1 by remember { mutableStateOf("") }
     var text2 by remember { mutableStateOf("") }
+    var operation by remember { mutableStateOf(true) }
+
+    val result = if (operation) plus(text1.toSafeInt(), text2.toSafeInt()) else minus(text1.toSafeInt(), text2.toSafeInt())
+
 
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
         Column(
@@ -76,17 +81,10 @@ fun SumScreen() {
                 modifier = Modifier.padding(innerPadding)
                 )
             Spacer(modifier = Modifier.padding(10.dp))
-            Button(onClick = {
-                Toast.makeText(
-                    context,
-                    "Resultado: ${(text1.toInt() + text2.toInt())}",
-                    Toast.LENGTH_SHORT
-                ).show()
-
-            }) {
-                Text(text = "Sumar")
-            }
-            Text("Resultado: ${(text1.toSafeInt() + text2.toSafeInt())}")
+            Switch(operation, {
+                operation = it
+            }, thumbContent = if(operation) { { Text("+") } } else { { Text("-") } })
+            Text("Resultado: ${result}")
         }
     }
 }
