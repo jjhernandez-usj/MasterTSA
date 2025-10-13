@@ -3,143 +3,105 @@ package es.usj.jjhernandez.mastertsa
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.MenuAnchorType
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import es.usj.jjhernandez.mastertsa.ui.theme.MasterTSATheme
 
-class MainActivity : ComponentActivity() {
+val countryName = arrayOf(
+    "Argentina", "Brazil", "Bolivia", "Chile", "Colombia",
+    "Ecuador", "Guayana Francesa", "Guyana", "Islas Falkland",
+    "Paraguay", "Peru", "Suriname", "Uruguay", "Venezuela"
+)
+val countryPopulation = arrayOf(
+    "43132000", "204519000", "10520000", "18006000", "45549000",
+    "16279000", "262000", "747000", "3000", "7003000",
+    "31153000", "560000", "3310000", "30620000"
+)
 
+class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             MasterTSATheme {
-                SumScreen()
+                CountryListScreen()
             }
         }
     }
 }
 
-fun plus(a: Int, b: Int) = a + b
-fun minus(a: Int, b: Int) = a - b
-fun divide(a: Int, b: Int) = a / b
-fun multiply(a: Int, b: Int) = a * b
-
-fun String.toSafeInt(): Int {
-    return try {
-        this.toInt()
-    } catch (_: NumberFormatException) {
-        0
-    }
-}
-
-fun result(operation: String, text1: String, text2: String): String {
-    return when (operation) {
-        "plus" -> "\n\t Plus: ${plus(text1.toSafeInt(), text2.toSafeInt())}"
-        "minus" -> "\n\t Minus: ${minus(text1.toSafeInt(), text2.toSafeInt())}"
-        "multiply" -> "\n\t Multiply: ${multiply(text1.toSafeInt(), text2.toSafeInt())}"
-        else -> "\n\t Divide: ${divide(text1.toSafeInt(), text2.toSafeInt())}"
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun SumScreen() {
-
-    var text1 by remember { mutableStateOf("") }
-    var text2 by remember { mutableStateOf("") }
-    var operations = arrayOf("plus", "minus", "multiply", "divide")
-    var operation by remember { mutableStateOf(operations[0]) }
-    var expanded by remember { mutableStateOf(false) }
-
-    var result = result(operation, text1, text2)
+fun CountryListScreen() {
+    var selected by remember { mutableIntStateOf(-1) }
 
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
+                .padding(innerPadding)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            TextField(
-                value = text1,
-                onValueChange = { text1 = it },
-                label = { Text("Introduce un valor...") },
-                textStyle = TextStyle.Default,
-                modifier = Modifier.padding(innerPadding),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            )
-            Spacer(modifier = Modifier.padding(10.dp))
-            TextField(
-                value = text2,
-                onValueChange = { text2 = it },
-                label = { Text("Introduce un valor...") },
-                textStyle = TextStyle.Default,
-                modifier = Modifier.padding(innerPadding),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-            )
-            Spacer(modifier = Modifier.padding(10.dp))
-            ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = { expanded = !expanded }
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.5f)
             ) {
-                TextField(
-                    value = operation,
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Selecciona una operación") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                    modifier = Modifier
-                        .menuAnchor(type = MenuAnchorType.PrimaryEditable, true)
-                )
-                ExposedDropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    operations.forEach { option ->
-                        DropdownMenuItem(
-                            text = { Text(option) },
-                            onClick = {
-                                operation = option
-                                expanded = false
-                            }
+                stickyHeader {
+                    Text(
+                        "Países",
+                        Modifier
+                            .fillMaxWidth()
+                            .background(Color.LightGray)
+                            .padding(8.dp)
+                    )
+                }
+                items(countryName.size) { item ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { selected = item }
+                            .padding(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = countryName[item],
+                            style = MaterialTheme.typography.bodyLarge
                         )
                     }
                 }
             }
-            Spacer(modifier = Modifier.padding(10.dp))
-            Text("Resultado: ${result}")
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (selected != -1) {
+                Text(
+                    text = "La población de ${countryName[selected]} es ${countryPopulation[selected]} habitantes",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            }
         }
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-fun SumScreenPreview() {
+fun CountryListScreenPreview() {
     MasterTSATheme {
-        SumScreen()
+        CountryListScreen()
     }
 }
