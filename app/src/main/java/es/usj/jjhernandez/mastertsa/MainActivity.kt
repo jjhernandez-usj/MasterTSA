@@ -1,49 +1,65 @@
 package es.usj.jjhernandez.mastertsa
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import es.usj.jjhernandez.mastertsa.ui.theme.MasterTSATheme
+import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
 
-    var text by mutableStateOf("Click to call")
+    val number = (10000..100000).random()
 
-    private fun call () {
-        text = "Calling..."
-    }
+    var text by mutableStateOf("$number")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MasterTSATheme {
-                CallingScreen(
-                    text,
-                    {
-                        call()
-                    }
-                )
+            LaunchedEffect("delay") {
+                delay(3000L)
+                text = "Repeat the number"
             }
+            val context = LocalContext.current // <-- Get the context here
+            MasterTSATheme {
+                GuessGameScreen(text, onButtonClicked = {
+                    Toast.makeText(context, compare(text, number), Toast.LENGTH_SHORT).show()
+                }, onTextChanged = {
+                    text = it
+                })
+            }
+        }
+    }
+
+    fun compare(text: String, number: Int): String {
+        return if (text.toInt() == number) {
+            "Correct"
+        } else {
+            "Incorrect"
         }
     }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun CallingScreen(text: String, onButtonClicked: () -> Unit) {
+fun GuessGameScreen(text: String, onButtonClicked: () -> Unit, onTextChanged: (text: String) -> Unit) {
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
         Column(
             modifier = Modifier
@@ -54,11 +70,12 @@ fun CallingScreen(text: String, onButtonClicked: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(text)
-            IconButton(onClick = { onButtonClicked() }) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_android_black_24dp), // Your new icon
-                    contentDescription = "Click to call"
-                )
+            Spacer(Modifier.padding(16.dp))
+            TextField("", onValueChange = { onTextChanged("$it") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+            Spacer(Modifier.padding(16.dp))
+            Button(onClick = { onButtonClicked() }) {
+                Text("Confirm")
             }
         }
     }
@@ -66,12 +83,16 @@ fun CallingScreen(text: String, onButtonClicked: () -> Unit) {
 
 @Preview(showBackground = true)
 @Composable
-fun CountryListScreenPreview() {
-    var text by remember { mutableStateOf("Click to call") }
+fun GuessGameScreenPreview() {
+
+    var text by remember { mutableStateOf("12345") }
 
     MasterTSATheme {
-        CallingScreen(text, onButtonClicked = {
-            text = "Calling..."
-        })
+
+        GuessGameScreen(
+            text = text,
+            onButtonClicked = { },
+            onTextChanged = { newText -> text = newText }
+        )
     }
 }
