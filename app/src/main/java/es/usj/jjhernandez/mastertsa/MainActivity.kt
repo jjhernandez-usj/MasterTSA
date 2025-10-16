@@ -71,7 +71,7 @@ fun GuessGameScreen(text: String, onButtonClicked: () -> Unit, onTextChanged: (t
         ) {
             Text(text)
             Spacer(Modifier.padding(16.dp))
-            TextField("", onValueChange = { onTextChanged("$it") },
+            TextField("", onValueChange = { onTextChanged(it) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
             Spacer(Modifier.padding(16.dp))
             Button(onClick = { onButtonClicked() }) {
