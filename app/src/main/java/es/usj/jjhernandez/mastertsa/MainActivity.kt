@@ -66,7 +66,7 @@ fun CallingScreen(text: String, onButtonClicked: () -> Unit) {
 
 @Preview(showBackground = true)
 @Composable
-fun CountryListScreenPreview() {
+fun CallingScreenPreview() {
     var text by remember { mutableStateOf("Click to call") }
 
     MasterTSATheme {
