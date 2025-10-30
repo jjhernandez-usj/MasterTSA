@@ -1,7 +1,10 @@
 <resources>
     <string name="app_name">MasterTSA</string>
-    <string name="first">First</string>
-    <string name="second">Second</string>
-    <string name="third">Third</string>
-    <string name="reset">Reset</string>
+    <string name="image_loaded">Image loaded</string>
+    <string name="write_the_filename">Write the filename</string>
+    <string name="sample_jpg">example</string>
+    <string name="load">Load</string>
+    <string name="take">Take</string>
+    <string name="get">Get</string>
+    <string name="selected_photo_from_the_list">Select image from list\n</string>
 </resources>
