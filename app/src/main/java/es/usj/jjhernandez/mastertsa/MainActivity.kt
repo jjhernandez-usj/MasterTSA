@@ -3,39 +3,47 @@ package es.usj.jjhernandez.mastertsa
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.view.MotionEvent
+import android.view.View
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import es.usj.jjhernandez.mastertsa.databinding.ActivityMainBinding
+import es.usj.jjhernandez.mastertsa.ui.components.CustomCanvas
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), View.OnTouchListener {
+
+    var cx: Float = 100f
+    var cy: Float = 100f
+
+    lateinit var canvas: CustomCanvas
+
+    private val view by lazy {
+        ActivityMainBinding.inflate(layoutInflater)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContentView(R.layout.activity_main)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+        setContentView(view.root)
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.canvasLayout)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+        canvas = CustomCanvas(this)
+        canvas.setOnTouchListener(this)
+        view.canvasLayout.addView(canvas)
     }
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.options_menu, menu)
-        return super.onCreateOptionsMenu(menu)
-    }
-
-    fun publish(value: String) {
-        Toast.makeText(this, value, Toast.LENGTH_SHORT).show()
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.first_option -> publish("First")
-            R.id.second_option -> publish("Second")
-            else -> publish("Third")
-        }
-        return super.onOptionsItemSelected(item)
+    override fun onTouch(view: View?, event: MotionEvent?): Boolean {
+        view?.performClick()
+        cx = event?.x ?: 0f
+        cy = event?.y ?: 0f
+        canvas.invalidate()
+        return true
     }
 }
+

@@ -11,6 +11,7 @@ android {
     }
 
     defaultConfig {
+        viewBinding.enable = true
         applicationId = "es.usj.jjhernandez.mastertsa"
         minSdk = 31
         targetSdk = 36
