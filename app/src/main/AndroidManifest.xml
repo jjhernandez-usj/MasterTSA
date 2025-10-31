@@ -19,11 +19,6 @@
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity>
-
-        <service
-            android:name=".services.BoundedService"
-            android:enabled="true"
-            android:exported="false" />
     </application>
 
 </manifest>
