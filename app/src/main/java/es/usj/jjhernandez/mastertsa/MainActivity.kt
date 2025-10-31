@@ -1,17 +1,14 @@
 package es.usj.jjhernandez.mastertsa
 
-import android.app.job.JobInfo
-import android.app.job.JobScheduler
 import android.content.ComponentName
+import android.content.Intent
+import android.content.ServiceConnection
 import android.os.Bundle
-import android.os.PersistableBundle
+import android.os.IBinder
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import es.usj.jjhernandez.mastertsa.databinding.ActivityMainBinding
-import es.usj.jjhernandez.mastertsa.services.DelayedMessageService
-import es.usj.jjhernandez.mastertsa.services.KEY
+import es.usj.jjhernandez.mastertsa.services.BoundedService
 
 class MainActivity : AppCompatActivity() {
 
@@ -19,27 +16,63 @@ class MainActivity : AppCompatActivity() {
         ActivityMainBinding.inflate(layoutInflater)
     }
 
+    lateinit var mBoundService: BoundedService
+    internal var mServiceBound = false
+
+    private val mServiceConnection = object : ServiceConnection {
+        override fun onServiceDisconnected(name: ComponentName) {
+            mServiceBound = false
+        }
+        override fun onServiceConnected(name: ComponentName,
+                                        service: IBinder
+        ) {
+            val myBinder = service as
+                    BoundedService.BoundServiceBinder
+            mBoundService = myBinder.service
+            mServiceBound = true
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(view.root)
+        supportActionBar?.hide()
+        view.btnStop.setOnClickListener { stop() }
+        view.btnPrintTimestamp.setOnClickListener {
+            printTimestamp() }
+    }
 
-        view.btnSendMessage.setOnClickListener {
-            val message = view.etMessage.text.toString()
-            val serviceComponent = ComponentName(
-                this,
-                DelayedMessageService::class.java
-            )
-            val builder = JobInfo.Builder(0, serviceComponent)
-            builder.setMinimumLatency((3 * 1000).toLong())
-            builder.setOverrideDeadline((6 * 1000).toLong())
-            builder.setExtras(
-                PersistableBundle().apply {
-                    putString(KEY, message)
-                }
-            )
-            val service = getSystemService(JOB_SCHEDULER_SERVICE) as JobScheduler
-            service.schedule(builder.build())
+    private fun stop() {
+        if (mServiceBound) {
+            unbindService(mServiceConnection)
+            mServiceBound = false
+        }
+        val intent = Intent(
+            this@MainActivity,
+            BoundedService::class.java
+        )
+        stopService(intent)
+    }
+    private fun printTimestamp() {
+        if (mServiceBound) {
+            view.tv1.text = mBoundService.getTimestamp()
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        val intent = Intent(this, BoundedService::class.java)
+        startService(intent)
+        bindService(intent, mServiceConnection,
+            BIND_AUTO_CREATE)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (mServiceBound) {
+            unbindService(mServiceConnection)
+            mServiceBound = false
         }
     }
 }
