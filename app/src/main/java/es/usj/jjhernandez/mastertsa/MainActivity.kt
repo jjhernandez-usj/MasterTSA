@@ -1,15 +1,16 @@
 package es.usj.jjhernandez.mastertsa
 
-import android.content.Context
+import android.Manifest
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import android.os.Build
 import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.os.VibratorManager
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.RequiresPermission
 import androidx.appcompat.app.AppCompatActivity
 import es.usj.jjhernandez.mastertsa.databinding.ActivityMainBinding
 import kotlin.math.abs
@@ -47,8 +48,8 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
             )
             vibrateThreshold = accelerometer!!.maximumRange / 2
         }
-        v = this.getSystemService(Context.VIBRATOR_SERVICE) as
-                Vibrator
+        val vibratorManager = getSystemService(VIBRATOR_MANAGER_SERVICE) as VibratorManager
+        v = vibratorManager.defaultVibrator
     }
 
     override fun onResume() {
@@ -64,6 +65,8 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     }
 
     override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {}
+
+    @RequiresPermission(Manifest.permission.VIBRATE)
     override fun onSensorChanged(event: SensorEvent) {
         displayCleanValues()
         displayCurrentValues()
@@ -80,9 +83,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         lastX = event.values[0]
         lastY = event.values[1]
         lastZ = event.values[2]
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            vibrate()
-        }
+        vibrate()
     }
 
     private fun displayCleanValues() {
@@ -111,14 +112,13 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         }
     }
 
+    @RequiresPermission(Manifest.permission.VIBRATE)
     private fun vibrate() {
         if (deltaX > vibrateThreshold || deltaY > vibrateThreshold
             ||
             deltaZ > vibrateThreshold) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                v.vibrate(
-                    VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK))
-            }
+            v.vibrate(
+                VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK))
         }
     }
 }
