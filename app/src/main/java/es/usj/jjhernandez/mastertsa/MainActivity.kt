@@ -1,124 +1,92 @@
 package es.usj.jjhernandez.mastertsa
 
 import android.Manifest
-import android.hardware.Sensor
-import android.hardware.SensorEvent
-import android.hardware.SensorEventListener
-import android.hardware.SensorManager
+import android.R
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
+import android.widget.ArrayAdapter
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
-import androidx.annotation.RequiresPermission
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import es.usj.jjhernandez.mastertsa.databinding.ActivityMainBinding
-import kotlin.math.abs
 
-class MainActivity : AppCompatActivity(), SensorEventListener {
-
-    private var lastX = 0f
-    private var lastY = 0f
-    private var lastZ = 0f
-    private var deltaXMax = 0f
-    private var deltaYMax = 0f
-    private var deltaZMax = 0f
-    private var deltaX = 0f
-    private var deltaY = 0f
-    private var deltaZ = 0f
-    private var vibrateThreshold = 0f
-    lateinit var v: Vibrator
-    private var sensorManager: SensorManager? = null
-    private var accelerometer: Sensor? = null
+class MainActivity : AppCompatActivity() {
 
     private val view by lazy {
         ActivityMainBinding.inflate(layoutInflater)
     }
+
+    private var bluetoothAdapter: BluetoothAdapter? = null
+    private lateinit var devices: Set<BluetoothDevice>
+
+    private val visibilityRequest =
+        registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()) { }
+
+    private val permissions =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(view.root)
         supportActionBar?.hide()
-        sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
-        if(sensorManager!!.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) != null) {
-            accelerometer = sensorManager!!.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
-            sensorManager!!.registerListener(
-                this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL
-            )
-            vibrateThreshold = accelerometer!!.maximumRange / 2
-        }
-        val vibratorManager = getSystemService(VIBRATOR_MANAGER_SERVICE) as VibratorManager
-        v = vibratorManager.defaultVibrator
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+        view.btnList.setOnClickListener { list() }
+        view.btnOn.setOnClickListener { on() }
+        view.btnOff.setOnClickListener { off() }
+        view.btnVisible.setOnClickListener { visible() }
     }
 
-    override fun onResume() {
-        super.onResume()
-        sensorManager!!.registerListener(
-            this, accelerometer,
-            SensorManager.SENSOR_DELAY_NORMAL
+    private fun list() {
+        devices = bluetoothAdapter?.bondedDevices ?: setOf()
+        val list = ArrayList<String>()
+        for (bt in devices)
+            list.add(bt.name)
+        Toast.makeText(applicationContext, "Showing Paired Devices",
+            Toast.LENGTH_SHORT).show()
+        val adapter = ArrayAdapter(
+            this,
+            R.layout.simple_list_item_1, list
         )
+        view.lv.adapter = adapter
     }
-    override fun onPause() {
-        super.onPause()
-        sensorManager!!.unregisterListener(this)
-    }
-
-    override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {}
-
-    @RequiresPermission(Manifest.permission.VIBRATE)
-    override fun onSensorChanged(event: SensorEvent) {
-        displayCleanValues()
-        displayCurrentValues()
-        displayMaxValues()
-        deltaX = abs(lastX - event.values[0])
-        deltaY = abs(lastY - event.values[1])
-        deltaZ = abs(lastZ - event.values[2])
-        if (deltaX < 2)
-            deltaX = 0f
-        if (deltaY < 2)
-            deltaY = 0f
-        if (deltaZ < 2)
-            deltaZ = 0f
-        lastX = event.values[0]
-        lastY = event.values[1]
-        lastZ = event.values[2]
-        vibrate()
-    }
-
-    private fun displayCleanValues() {
-        view.currentX.text = "0.0"
-        view.currentY.text = "0.0"
-        view.currentZ.text = "0.0"
-    }
-    private fun displayCurrentValues() {
-        view.currentX.text = deltaX.toString()
-        view.currentY.text = deltaY.toString()
-        view.currentZ.text = deltaZ.toString()
-    }
-
-    private fun displayMaxValues() {
-        if (deltaX > deltaXMax) {
-            deltaXMax = deltaX
-            view.maxX.text = deltaXMax.toString()
-        }
-        if (deltaY > deltaYMax) {
-            deltaYMax = deltaY
-            view.maxY.text = deltaYMax.toString()
-        }
-        if (deltaZ > deltaZMax) {
-            deltaZMax = deltaZ
-            view.maxZ.text = deltaZMax.toString()
+    private fun on() {
+        if (!isBluetoothPermissionGranted()) {
+            permissions.launch(arrayOf(Manifest.permission.BLUETOOTH,
+                    Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH_CONNECT))
         }
     }
 
-    @RequiresPermission(Manifest.permission.VIBRATE)
-    private fun vibrate() {
-        if (deltaX > vibrateThreshold || deltaY > vibrateThreshold
-            ||
-            deltaZ > vibrateThreshold) {
-            v.vibrate(
-                VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK))
+    private fun off() {
+        bluetoothAdapter?.disable()
+        Toast.makeText(applicationContext, "Bluetooth disabled",
+            Toast.LENGTH_LONG).show()
+    }
+
+    private fun visible() {
+        val visibleIntent =
+            Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE)
+        visibilityRequest.launch(visibleIntent)
+    }
+
+    private fun isBluetoothPermissionGranted(): Boolean {
+        var granted = false
+        val bluetoothGranted =
+            checkSelfPermission(Manifest.permission.BLUETOOTH)
+        val bluetoothAdminGranted =
+            checkSelfPermission(Manifest.permission.BLUETOOTH_ADMIN)
+        val bluetoothConnectGranted =
+            checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT)
+        if (bluetoothGranted == PackageManager.PERMISSION_GRANTED &&
+            bluetoothAdminGranted == PackageManager.PERMISSION_GRANTED &&
+            bluetoothConnectGranted == PackageManager.PERMISSION_GRANTED) {
+            granted = true
         }
+        return granted
     }
 }

@@ -9,4 +9,9 @@
     <string name="XAxis">X Axis</string>
     <string name="YAxis">Y Axis</string>
     <string name="ZAxis">Z Axis</string>
+    <string name="off">Off</string>
+    <string name="on">On</string>
+    <string name="visible">Visible</string>
+    <string name="list">List</string>
+    <string name="bluetooth">Bluetooth</string>
 </resources>
